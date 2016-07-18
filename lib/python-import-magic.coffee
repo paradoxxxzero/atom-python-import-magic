@@ -28,5 +28,5 @@ module.exports =
   reindex: ->
     call
       cmd: 'reindex', 'utf-8', (out) ->
-      console.log 'Import magic', out.message
+        console.log 'Import magic', out.message
   provide: -> provider
