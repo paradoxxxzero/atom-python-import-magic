@@ -9,22 +9,24 @@ module.exports =
       'python-import-magic:update': => @update()
       'python-import-magic:reindex': => @reindex()
     )
-    call 'O', 'utf-8', (out) ->
-      console.log 'Import magic indexing done', out
+    call
+      cmd: 'init', 'utf-8', (out) ->
+        console.log 'Import magic', out.message
 
   deactivate: ->
     @subscriptions.dispose()
 
   update: ->
     editor = atom.workspace.getActiveTextEditor()
-    in_ = 'F' + editor.getBuffer().getText()
-    encoding = editor.getBuffer().getEncoding()
 
-    call in_, encoding, (out) ->
-      editor.getBuffer().setTextViaDiff(out)
+    call
+      cmd: 'file_import_magic'
+      source: editor.getBuffer().getText()
+    , editor.getBuffer().getEncoding(), (out) ->
+      editor.getBuffer().setTextViaDiff(out.file)
 
   reindex: ->
-    call 'R', 'utf-8', (out) ->
-      console.log 'Import magic reindexing done', out
-
+    call
+      cmd: 'reindex', 'utf-8', (out) ->
+      console.log 'Import magic', out.message
   provide: -> provider

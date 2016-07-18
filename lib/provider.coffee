@@ -23,16 +23,21 @@ module.exports =
   getSuggestions: ({editor, bufferPosition, scopeDescriptor, prefix, activatedManually}) ->
     new Promise (resolve) =>
       return resolve([]) unless activatedManually
-      call 'I' + prefix, 'utf-8', (out) ->
+      call
+        cmd: 'list_possible_imports'
+        prefix: prefix
+        source: editor.getBuffer().getText()
+      , editor.getBuffer().getEncoding(), (out) ->
         resolve ({
           text: imp
           type: 'import'
-        } for imp in out.split('\n'))
+        } for imp in out.imports)
 
   onDidInsertSuggestion: ({editor, triggerPosition, suggestion}) ->
     editor.undo()
-    in_ = 'F' + suggestion.text + '\n' + editor.getBuffer().getText()
-    encoding = editor.getBuffer().getEncoding()
-
-    call in_, encoding, (out) ->
-      editor.getBuffer().setTextViaDiff(out)
+    call
+      cmd: 'add_import'
+      source: editor.getBuffer().getText()
+      new_import: suggestion.text
+    , editor.getBuffer().getEncoding(), (out) ->
+      editor.getBuffer().setTextViaDiff(out.file)

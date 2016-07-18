@@ -1,11 +1,12 @@
 import fileinput
-import sys
+import json
 import os
+import sys
 
 import importmagic
+import isort
 
-
-index_file = '.magicindex.json'
+index_file = os.path.abspath('.magicindex.json')
 
 
 def read_index():
@@ -24,34 +25,49 @@ def remove_index():
     os.remove(index_file)
 
 
+def read():
+    return json.loads(''.join(fileinput.input()))
+
+
+def write(**dct):
+    sys.stdout.write(json.dumps(dct))
+    sys.stdout.flush()
+
+
 index = read_index() if os.path.exists(index_file) else None
 
 
-if __name__ == '__main__':
-    in_ = ''.join(fileinput.input())
-    out = ''
-    cmd = in_[0]
-    source = in_[1:]
-
-    if index is None and cmd in 'FI':
-        print('Index is void.')
-        sys.stdout.flush()
-        sys.exit(11)
-
-    if cmd == 'R':
+class Commands(object):
+    def reindex(self):
         remove_index()
         create_index()
+        write(message='%s reindexed.' % index_file)
         sys.exit(0)
 
-    elif cmd == 'F':
+    def file_import_magic(self, source):
         scope = importmagic.Scope.from_source(source)
         unresolved, unreferenced = (
             scope.find_unresolved_and_unreferenced_symbols())
-        out = ''.join(importmagic.update_imports(
+        source = ''.join(importmagic.update_imports(
             source, index, unresolved, unreferenced))
+        source = isort.SortImports(file_contents=source).output
+        write(file=source)
 
-    elif cmd == 'I':
-        scores = index.symbol_scores(source)
+    def add_import(self, source, new_import):
+        source = '\n'.join((new_import, source))
+        source = isort.SortImports(file_contents=source).output
+        write(file=source)
+
+    def list_possible_imports(self, prefix, source):
+        scope = importmagic.Scope.from_source(source)
+        unresolved, unreferenced = (
+            scope.find_unresolved_and_unreferenced_symbols())
+
+        if prefix not in unresolved:
+            write(imports=[])
+            return
+
+        scores = index.symbol_scores(prefix)
         imports = []
         for _, module, variable in scores:
             if variable is None:
@@ -60,16 +76,27 @@ if __name__ == '__main__':
                 imports.append(
                     'from %s import %s' % (
                         module, variable))
-        out = '\n'.join(imports)
+        write(imports=imports)
 
-    elif cmd == 'O':
+    def init(self):
         if index is None:
             create_index()
-    else:
-        print('Unknown command %s' % cmd)
-        sys.stdout.flush()
-        sys.exit(12)
+            write(message='%s indexed.' % index_file)
+        else:
+            write(message='Using index %s.' % index_file)
 
-    if out:
-        sys.stdout.write(out)
-    sys.stdout.flush()
+if __name__ == '__main__':
+    data = read()
+    command = Commands()
+    cmd = data.pop('cmd', None)
+    fun = getattr(command, cmd, None)
+
+    if index is None and cmd in ('file', 'imports'):
+        write(message='Index is void.')
+        sys.exit(1)
+
+    if not fun:
+        write(message='Unknown command %s' % cmd)
+        sys.exit(2)
+
+    fun(**data)
