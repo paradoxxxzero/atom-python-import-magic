@@ -55,7 +55,14 @@ class Commands(object):
         write(file=source)
 
     def add_import(self, source, new_import):
-        source = '\n'.join((new_import, source))
+        lines = source.split('\n')
+        i = 0
+        for i, line in enumerate(lines):
+            line = line.strip()
+            if line and line[0] != '#':
+                break
+        lines.insert(i, new_import)
+        source = '\n'.join(lines)
         source = isort.SortImports(file_contents=source).output
         write(file=source)
 

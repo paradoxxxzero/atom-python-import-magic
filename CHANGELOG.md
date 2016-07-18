@@ -1,3 +1,6 @@
+## 0.4.0 - Verbose
+* Prevent inserting imports before top level comments
+
 ## 0.3.0 - Complex
 * Complete more complex prefixes (os.path)
 
