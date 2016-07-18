@@ -1,3 +1,9 @@
+## 0.3.0 - Complex
+* Complete more complex prefixes (os.path)
+
+## 0.2.1 - Indentation
+* Fix indentation
+
 ## 0.2.0 - Better release
 * Add an autocomplete provider
 * Use isort

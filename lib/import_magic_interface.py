@@ -2,6 +2,7 @@ import fileinput
 import json
 import os
 import sys
+from itertools import accumulate, chain
 
 import importmagic
 import isort
@@ -59,13 +60,20 @@ class Commands(object):
         write(file=source)
 
     def list_possible_imports(self, prefix, source):
-        scope = importmagic.Scope.from_source(source)
-        unresolved, unreferenced = (
-            scope.find_unresolved_and_unreferenced_symbols())
+        try:
+            scope = importmagic.Scope.from_source(source)
+        except SyntaxError:
+            scope = None
 
-        if prefix not in unresolved:
-            write(imports=[])
-            return
+        if scope:
+            unresolved, unreferenced = (
+                scope.find_unresolved_and_unreferenced_symbols())
+
+            if prefix not in set(chain(*[
+                    accumulate(part.split('.'), lambda *t: '.'.join(t))
+                    for part in unresolved])):
+                write(imports=[])
+                return
 
         scores = index.symbol_scores(prefix)
         imports = []

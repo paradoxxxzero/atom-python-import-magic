@@ -14,10 +14,12 @@ module.exports =
 
     proc.on 'close', (code) ->
       if code is 0
+        # console.log out
         callback JSON.parse(out)
       else
         console.error('Python Import Magic Error', code, out, err)
 
     proc.stdin.setEncoding encoding
+    # console.log in_
     proc.stdin.write JSON.stringify(in_)
     proc.stdin.end()

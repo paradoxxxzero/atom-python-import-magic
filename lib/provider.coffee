@@ -3,8 +3,8 @@
 module.exports =
   selector: '.source.python'
 
-  suggestionPriority: 10
-  inclusionPriority: 1
+  suggestionPriority: 5
+  inclusionPriority: 2
   excludeLowerPriority: false
 
   getSuggestsFromCompletions: (completions, prefix, fullPrefix='') ->
@@ -23,6 +23,11 @@ module.exports =
   getSuggestions: ({editor, bufferPosition, scopeDescriptor, prefix, activatedManually}) ->
     new Promise (resolve) =>
       return resolve([]) unless activatedManually
+
+      regex = /[\w0-9_\.-]+$/
+      line = editor.getTextInRange([[bufferPosition.row, 0], bufferPosition])
+      prefix = line.match(regex)?[0] or ''
+
       call
         cmd: 'list_possible_imports'
         prefix: prefix
