@@ -1,16 +1,20 @@
 {
   "name": "python-import-magic",
   "main": "./lib/python-import-magic",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Import automatically python modules using importmagic",
   "keywords": [],
-  "activationCommands": {
-    "atom-workspace": "python-import-magic:update"
-  },
   "repository": "https://github.com/paradoxxxzero/atom-python-import-magic",
   "license": "MIT",
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
+  },
+  "providedServices": {
+    "autocomplete.provider": {
+      "versions": {
+        "2.0.0": "provide"
+      }
+    }
   },
   "dependencies": {}
 }

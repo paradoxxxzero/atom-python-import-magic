@@ -1,5 +1,6 @@
 {
   "atom-workspace": {
-    "ctrl-shift-space": "python-import-magic:update"
+    "ctrl-shift-space": "python-import-magic:update",
+    "ctrl-alt-i": "python-import-magic:reindex"
   }
 }

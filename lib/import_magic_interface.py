@@ -1,6 +1,6 @@
 import fileinput
-import os
 import sys
+import os
 
 import importmagic
 
@@ -24,21 +24,52 @@ def remove_index():
     os.remove(index_file)
 
 
-index = read_index() if os.path.exists(index_file) else create_index()
+index = read_index() if os.path.exists(index_file) else None
 
 
 if __name__ == '__main__':
-    source = ''.join(fileinput.input())
+    in_ = ''.join(fileinput.input())
+    out = ''
+    cmd = in_[0]
+    source = in_[1:]
 
-    if source == 'reindex':
+    if index is None and cmd in 'FI':
+        print('Index is void.')
+        sys.stdout.flush()
+        sys.exit(11)
+
+    if cmd == 'R':
         remove_index()
         create_index()
-        print('done')
         sys.exit(0)
 
-    scope = importmagic.Scope.from_source(source)
-    unresolved, unreferenced = scope.find_unresolved_and_unreferenced_symbols()
-    source = importmagic.update_imports(
-        source, index, unresolved, unreferenced)
-    sys.stdout.write(''.join(source))
+    elif cmd == 'F':
+        scope = importmagic.Scope.from_source(source)
+        unresolved, unreferenced = (
+            scope.find_unresolved_and_unreferenced_symbols())
+        out = ''.join(importmagic.update_imports(
+            source, index, unresolved, unreferenced))
+
+    elif cmd == 'I':
+        scores = index.symbol_scores(source)
+        imports = []
+        for _, module, variable in scores:
+            if variable is None:
+                imports.append('import %s' % module)
+            else:
+                imports.append(
+                    'from %s import %s' % (
+                        module, variable))
+        out = '\n'.join(imports)
+
+    elif cmd == 'O':
+        if index is None:
+            create_index()
+    else:
+        print('Unknown command %s' % cmd)
+        sys.stdout.flush()
+        sys.exit(12)
+
+    if out:
+        sys.stdout.write(out)
     sys.stdout.flush()
