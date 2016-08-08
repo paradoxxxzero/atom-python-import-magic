@@ -7,42 +7,53 @@ from itertools import accumulate, chain
 import importmagic
 import isort
 
-index_file = os.path.abspath('.magicindex.json')
-
-
-def read_index():
-    with open(index_file) as fd:
-        return importmagic.SymbolIndex.deserialize(fd)
-
-
-def create_index():
-    index = importmagic.SymbolIndex()
-    index.build_index(sys.path)
-    with open(index_file, 'w') as fd:
-        index.serialize(fd)
-
-
-def remove_index():
-    os.remove(index_file)
-
-
-def read():
-    return json.loads(''.join(fileinput.input()))
-
-
-def write(**dct):
-    sys.stdout.write(json.dumps(dct))
-    sys.stdout.flush()
-
-
-index = read_index() if os.path.exists(index_file) else None
-
 
 class Commands(object):
+    def __init__(self):
+        self.data = self.read()
+        self.cmd = self.data.pop('cmd', None)
+        self.cwd = self.data.pop('cwd', None)
+
+        self.index_file = os.path.join(self.cwd, '.magicindex.json')
+        self.index = self.read_index() if os.path.exists(
+            self.index_file) else None
+
+    def run(self):
+        fun = getattr(self, self.cmd, None)
+        if self.index is None and self.cmd in ('file', 'imports'):
+            self.write(message='Index is void.')
+            sys.exit(1)
+
+        if not fun:
+            self.write(message='Unknown command %s' % self.cmd)
+            sys.exit(2)
+
+        fun(**self.data)
+
+    def read_index(self):
+        with open(self.index_file) as fd:
+            return importmagic.SymbolIndex.deserialize(fd)
+
+    def create_index(self):
+        index = importmagic.SymbolIndex()
+        index.build_index(sys.path + [self.cwd])
+        with open(self.index_file, 'w') as fd:
+            index.serialize(fd)
+
+    def remove_index(self):
+        os.remove(self.index_file)
+
+    def read(self):
+        return json.loads(''.join(fileinput.input()))
+
+    def write(self, **dct):
+        sys.stdout.write(json.dumps(dct))
+        sys.stdout.flush()
+
     def reindex(self):
-        remove_index()
-        create_index()
-        write(message='%s reindexed.' % index_file)
+        self.remove_index()
+        self.create_index()
+        self.write(message='%s reindexed.' % self.index_file)
         sys.exit(0)
 
     def file_import_magic(self, source):
@@ -50,9 +61,9 @@ class Commands(object):
         unresolved, unreferenced = (
             scope.find_unresolved_and_unreferenced_symbols())
         source = ''.join(importmagic.update_imports(
-            source, index, unresolved, unreferenced))
+            source, self.index, unresolved, unreferenced))
         source = isort.SortImports(file_contents=source).output
-        write(file=source)
+        self.write(file=source)
 
     def add_import(self, source, new_import):
         lines = source.split('\n')
@@ -64,7 +75,7 @@ class Commands(object):
         lines.insert(i, new_import)
         source = '\n'.join(lines)
         source = isort.SortImports(file_contents=source).output
-        write(file=source)
+        self.write(file=source)
 
     def list_possible_imports(self, prefix, source):
         try:
@@ -79,10 +90,10 @@ class Commands(object):
             if prefix not in set(chain(*[
                     accumulate(part.split('.'), lambda *t: '.'.join(t))
                     for part in unresolved])):
-                write(imports=[])
+                self.write(imports=[])
                 return
 
-        scores = index.symbol_scores(prefix)
+        scores = self.index.symbol_scores(prefix)
         imports = []
         for _, module, variable in scores:
             if variable is None:
@@ -91,27 +102,14 @@ class Commands(object):
                 imports.append(
                     'from %s import %s' % (
                         module, variable))
-        write(imports=imports)
+        self.write(imports=imports)
 
     def init(self):
-        if index is None:
-            create_index()
-            write(message='%s indexed.' % index_file)
+        if self.index is None:
+            self.create_index()
+            self.write(message='%s indexed.' % self.index_file)
         else:
-            write(message='Using index %s.' % index_file)
+            self.write(message='Using index %s.' % self.index_file)
 
 if __name__ == '__main__':
-    data = read()
-    command = Commands()
-    cmd = data.pop('cmd', None)
-    fun = getattr(command, cmd, None)
-
-    if index is None and cmd in ('file', 'imports'):
-        write(message='Index is void.')
-        sys.exit(1)
-
-    if not fun:
-        write(message='Unknown command %s' % cmd)
-        sys.exit(2)
-
-    fun(**data)
+    Commands().run()

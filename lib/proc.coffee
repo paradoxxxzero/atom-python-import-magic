@@ -20,6 +20,8 @@ module.exports =
         console.error('Python Import Magic Error', code, out, err)
 
     proc.stdin.setEncoding encoding
+    in_.cwd = atom.project.getDirectories()[0].getPath()
+
     # console.log in_
     proc.stdin.write JSON.stringify(in_)
     proc.stdin.end()

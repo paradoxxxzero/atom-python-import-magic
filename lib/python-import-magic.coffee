@@ -26,6 +26,7 @@ module.exports =
       editor.getBuffer().setTextViaDiff(out.file)
 
   reindex: ->
+    console.log 'Import magic', 'Reindexing...'
     call
       cmd: 'reindex', 'utf-8', (out) ->
         console.log 'Import magic', out.message
