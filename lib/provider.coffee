@@ -36,7 +36,7 @@ module.exports =
         resolve ({
           text: imp
           type: 'import'
-        } for imp in out.imports)
+        } for imp in out.imports or [])
 
   onDidInsertSuggestion: ({editor, triggerPosition, suggestion}) ->
     editor.undo()

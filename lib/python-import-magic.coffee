@@ -29,5 +29,7 @@ module.exports =
     console.log 'Import magic', 'Reindexing...'
     call
       cmd: 'reindex', 'utf-8', (out) ->
-        console.log 'Import magic', out.message
+        if out.success
+          atom.notifications.addSuccess(out.success, detail: out.detail)
+        console.debug 'Import magic', out
   provide: -> provider

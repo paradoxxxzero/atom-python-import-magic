@@ -20,13 +20,20 @@ class Commands(object):
 
     def run(self):
         fun = getattr(self, self.cmd, None)
-        if self.index is None and self.cmd in ('file', 'imports'):
-            self.write(message='Index is void.')
-            sys.exit(1)
+        if self.index is None and self.cmd in (
+                'file_import_magic', 'add_import', 'list_possible_imports'):
+            self.write(
+                notification='warning',
+                message='Python import magic %s' % self.cmd,
+                detail='Index %s is not yet initialized.' % self.index_file)
+            return
 
         if not fun:
-            self.write(message='Unknown command %s' % self.cmd)
-            sys.exit(2)
+            self.write(
+                notification='error',
+                message='Python import magic %s' % self.cmd,
+                detail='Unknown command %s' % self.cmd)
+            return
 
         fun(**self.data)
 
@@ -36,12 +43,13 @@ class Commands(object):
 
     def create_index(self):
         index = importmagic.SymbolIndex()
-        index.build_index(sys.path + [self.cwd])
+        index.build_index(sys.path + [self.index_file])
         with open(self.index_file, 'w') as fd:
             index.serialize(fd)
 
     def remove_index(self):
-        os.remove(self.index_file)
+        if os.path.exists(self.index_file):
+            os.remove(self.index_file)
 
     def read(self):
         return json.loads(''.join(fileinput.input()))
@@ -53,7 +61,10 @@ class Commands(object):
     def reindex(self):
         self.remove_index()
         self.create_index()
-        self.write(message='%s reindexed.' % self.index_file)
+        self.write(
+            notification='success',
+            message='Python import magic reindex',
+            detail='%s reindexed.' % self.index_file)
         sys.exit(0)
 
     def file_import_magic(self, source):
