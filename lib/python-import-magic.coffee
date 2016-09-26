@@ -21,7 +21,7 @@ module.exports =
     reindexOnSave:
       type: 'boolean'
       default: false
-      title: 'Run a re-indexation of imports on file save'
+      title: 'Run a reindexation of imports on file save'
 
   activate: (state) ->
     @subscriptions = new CompositeDisposable()
