@@ -37,7 +37,6 @@ module.exports =
         @reindexing = true
         call
           cmd: 'reindex', 'utf-8', =>
-            console.debug 'Reindexed on save'
             @reindexing = false
           , true
     )

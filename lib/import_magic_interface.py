@@ -56,6 +56,7 @@ class Commands(object):
         self.cwd = self.data.pop('cwd', None)
 
         self.index_file = os.path.join(self.cwd, '.magicindex.json')
+        self._tmp_index_file = os.path.join(self.cwd, '.magicindex.json.tmp')
         self.index = self.read_index() if os.path.exists(
             self.index_file) else None
 
@@ -63,6 +64,8 @@ class Commands(object):
         fun = getattr(self, self.cmd, None)
         if self.index is None and self.cmd in (
                 'file_import_magic', 'add_import', 'list_possible_imports'):
+            if self._tmp_index_file:
+                return
             self.create_index()
 
         if not fun:
@@ -80,13 +83,10 @@ class Commands(object):
 
     def create_index(self):
         index = importmagic.SymbolIndex()
-        index.build_index(sys.path + [self.index_file])
-        with open(self.index_file, 'w') as fd:
+        index.build_index(sys.path + [self.cwd])
+        with open(self._tmp_index_file, 'w') as fd:
             index.serialize(fd)
-
-    def remove_index(self):
-        if os.path.exists(self.index_file):
-            os.remove(self.index_file)
+        os.replace(self._tmp_index_file, self.index_file)
 
     def read(self):
         return json.loads(''.join(fileinput.input()))
@@ -96,7 +96,6 @@ class Commands(object):
         sys.stdout.flush()
 
     def reindex(self):
-        self.remove_index()
         self.create_index()
         self.write(
             notification='success',
