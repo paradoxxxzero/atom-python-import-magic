@@ -22,7 +22,8 @@ module.exports =
 
   getSuggestions: ({editor, bufferPosition, scopeDescriptor, prefix, activatedManually}) ->
     new Promise (resolve) =>
-      return resolve([]) unless activatedManually
+      return resolve([]) unless activatedManually and atom.config.get(
+        'python-import-magic.autocompleteImports')
 
       regex = /[\w0-9_\.-]+$/
       line = editor.getTextInRange([[bufferPosition.row, 0], bufferPosition])

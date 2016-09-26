@@ -1,11 +1,52 @@
+"""
+    import_magic python interfa
+"""
+
 import fileinput
 import json
 import os
 import sys
-from itertools import accumulate, chain
+from itertools import chain
 
-import importmagic
-import isort
+try:
+    from itertools import accumulate
+except ImportError:
+    import operator
+
+    def accumulate(iterable, func=operator.add):
+        it = iter(iterable)
+        try:
+            total = next(it)
+        except StopIteration:
+            return
+        yield total
+        for element in it:
+            total = func(total, element)
+            yield total
+
+try:
+    import importmagic
+except ImportError:
+    importmagic = None
+
+try:
+    import isort
+except ImportError:
+    isort = None
+
+if isort is None or importmagic is None:
+    # Missing dependencies
+    cmd = 'pip install'
+    if isort is None:
+        cmd += ' isort'
+    if importmagic is None:
+        cmd += ' importmagic'
+    from subprocess import call, STDOUT
+    with open(os.devnull, 'w') as devnull:
+        ret = call(cmd, shell=True, stdout=devnull, stderr=STDOUT)
+    if ret == 0:
+        python = sys.executable
+        os.execl(python, python, *sys.argv)
 
 
 class Commands(object):
@@ -22,11 +63,7 @@ class Commands(object):
         fun = getattr(self, self.cmd, None)
         if self.index is None and self.cmd in (
                 'file_import_magic', 'add_import', 'list_possible_imports'):
-            self.write(
-                notification='warning',
-                message='Python import magic %s' % self.cmd,
-                detail='Index %s is not yet initialized.' % self.index_file)
-            return
+            self.create_index()
 
         if not fun:
             self.write(
@@ -77,15 +114,8 @@ class Commands(object):
         self.write(file=source)
 
     def add_import(self, source, new_import):
-        lines = source.split('\n')
-        i = 0
-        for i, line in enumerate(lines):
-            line = line.strip()
-            if line and line[0] != '#':
-                break
-        lines.insert(i, new_import)
-        source = '\n'.join(lines)
-        source = isort.SortImports(file_contents=source).output
+        source = isort.SortImports(
+            file_contents=source, add_imports=(new_import,)).output
         self.write(file=source)
 
     def list_possible_imports(self, prefix, source):

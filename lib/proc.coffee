@@ -1,7 +1,28 @@
 {spawn} = require 'child_process'
+{accessSync, X_OK} = require 'fs'
+{homedir} = require 'os'
+path = require 'path'
+
+python = ->
+  paths = atom.config.get('python-import-magic.pythonPaths').split(';')
+  for pth in paths
+    unless pth
+      continue
+    for project in atom.project.getPaths()
+      [..., projectName] = project.split(path.sep)
+      pth = pth.replace(/\~/i, homedir())
+      pth = pth.replace(/\$PROJECT_NAME/i, projectName)
+      pth = pth.replace(/\$PROJECT/i, project)
+      try
+        accessSync pth, X_OK
+        return pth
+      catch
+        continue
+
+  'python'
 
 module.exports =
-  call: (in_, encoding, callback) ->
+  call: (in_, encoding, callback, silent) ->
     cwd = atom.project.getDirectories()?[0]?.getPath()
     unless cwd
       console.log('No cwd')
@@ -14,7 +35,7 @@ module.exports =
     in_.cwd = cwd
 
     out = err = ''
-    proc = spawn("python", [ __dirname + '/import_magic_interface.py'])
+    proc = spawn python(), [ __dirname + '/import_magic_interface.py']
 
     proc.stdout.on 'data', (data) -> out += data
     proc.stderr.on 'data', (data) -> err += data
@@ -30,10 +51,11 @@ module.exports =
         if o.notification
           addNotification = (
             'add' + o.notification[0].toUpperCase() + o.notification[1..-1])
-          atom.notifications[addNotification](o.message, detail: o.detail)
+          unless silent
+            atom.notifications[addNotification](o.message, detail: o.detail)
         else if o.message
           console.log o
-        callback o
+        callback? o
       else
         atom.notifications.addError(
           "Python Import Magic Invocation Error", detail: out + err)
