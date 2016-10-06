@@ -30,7 +30,7 @@ module.exports =
       'python-import-magic:reindex': => @reindex()
     )
     @subscriptions.add atom.workspace.observeTextEditors((editor) =>
-      return unless editor.getFileName().endsWith('.py')
+      return unless editor.getFileName()?.endsWith('.py')
       @subscriptions.add editor.onDidSave =>
         return if @reindexing
         return unless atom.config.get('python-import-magic.reindexOnSave')
