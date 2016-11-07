@@ -64,7 +64,7 @@ class Commands(object):
         fun = getattr(self, self.cmd, None)
         if self.index is None and self.cmd in (
                 'file_import_magic', 'add_import', 'list_possible_imports'):
-            if self._tmp_index_file:
+            if os.path.exists(self._tmp_index_file):
                 return
             self.create_index()
 
