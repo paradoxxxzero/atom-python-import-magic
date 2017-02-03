@@ -25,13 +25,10 @@ module.exports =
   call: (in_, encoding, callback, silent) ->
     cwd = atom.project.getDirectories()?[0]?.getPath()
     unless cwd
-      console.log('No cwd')
       setTimeout ->
-        console.warn('Retrying')
         module.exports.call(in_, encoding, callback)
       , 500
       return
-    console.log('Cwd is ', cwd)
     in_.cwd = cwd
 
     out = err = ''
@@ -52,9 +49,8 @@ module.exports =
           addNotification = (
             'add' + o.notification[0].toUpperCase() + o.notification[1..-1])
           unless silent
-            atom.notifications[addNotification](o.message, detail: o.detail)
-        else if o.message
-          console.log o
+            atom.notifications[addNotification](
+              '[python-import-magic] ' + o.message, detail: o.detail)
         callback? o
       else
         atom.notifications.addError(

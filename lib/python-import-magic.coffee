@@ -42,8 +42,8 @@ module.exports =
     )
     @reindexing = false
     call
-      cmd: 'init', 'utf-8', (out) ->
-        console.log 'Import magic', out.message
+      cmd: 'init', 'utf-8'
+
   deactivate: ->
     @subscriptions.dispose()
 
@@ -57,6 +57,5 @@ module.exports =
       editor.getBuffer().setTextViaDiff(out.file)
 
   reindex: ->
-    console.log 'Import magic', 'Reindexing...'
     call cmd: 'reindex', 'utf-8'
   provide: -> provider

@@ -34,23 +34,17 @@ try:
 except ImportError:
     isort = None
 
-if isort is None or importmagic is None:
-    # Missing dependencies
-    cmd = 'pip install'
-    if isort is None:
-        cmd += ' isort'
-    if importmagic is None:
-        cmd += ' importmagic'
-    from subprocess import call, STDOUT
-    with open(os.devnull, 'w') as devnull:
-        ret = call(cmd, shell=True, stdout=devnull, stderr=STDOUT)
-    if ret == 0:
-        python = sys.executable
-        os.execl(python, python, *sys.argv)
-
 
 class Commands(object):
     def __init__(self):
+        if isort is None or importmagic is None:
+            self.write(
+                notification='error',
+                message='importmagic/isort not found',
+                detail='You must install isort and importmagic for %s' %
+                sys.executable)
+            sys.exit(0)
+
         self.data = self.read()
         self.cmd = self.data.pop('cmd', None)
         self.cwd = self.data.pop('cwd', None)
@@ -71,7 +65,7 @@ class Commands(object):
         if not fun:
             self.write(
                 notification='error',
-                message='Python import magic %s' % self.cmd,
+                message=self.cmd,
                 detail='Unknown command %s' % self.cmd)
             return
 
@@ -99,7 +93,7 @@ class Commands(object):
         self.create_index()
         self.write(
             notification='success',
-            message='Python import magic reindex',
+            message='Reindex',
             detail='%s reindexed.' % self.index_file)
         sys.exit(0)
 
@@ -150,6 +144,7 @@ class Commands(object):
             self.write(message='%s indexed.' % self.index_file)
         else:
             self.write(message='Using index %s.' % self.index_file)
+
 
 if __name__ == '__main__':
     Commands().run()
