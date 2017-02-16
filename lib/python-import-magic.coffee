@@ -31,6 +31,10 @@ module.exports =
     )
     @subscriptions.add atom.workspace.observeTextEditors((editor) =>
       return unless editor.getFileName()?.endsWith('.py')
+      unless @inited
+        @inited = true
+        call
+          cmd: 'init', 'utf-8'
       @subscriptions.add editor.onDidSave =>
         return if @reindexing
         return unless atom.config.get('python-import-magic.reindexOnSave')
@@ -40,9 +44,8 @@ module.exports =
             @reindexing = false
           , true
     )
+    @inited = false
     @reindexing = false
-    call
-      cmd: 'init', 'utf-8'
 
   deactivate: ->
     @subscriptions.dispose()

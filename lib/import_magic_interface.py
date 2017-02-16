@@ -61,6 +61,7 @@ class Commands(object):
             if os.path.exists(self._tmp_index_file):
                 return
             self.create_index()
+            self.index = self.read_index()
 
         if not fun:
             self.write(
