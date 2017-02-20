@@ -52,6 +52,7 @@ module.exports =
 
   update: ->
     editor = atom.workspace.getActiveTextEditor()
+    return unless editor?
 
     call
       cmd: 'file_import_magic'
