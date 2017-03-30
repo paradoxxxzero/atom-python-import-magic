@@ -7,6 +7,7 @@ import json
 import os
 import sys
 from itertools import chain
+from tempfile import gettempdir
 
 try:
     from itertools import accumulate
@@ -47,7 +48,7 @@ class Commands(object):
 
         self.data = self.read()
         self.cmd = self.data.pop('cmd', None)
-        self.cwd = self.data.pop('cwd', None)
+        self.cwd = self.data.pop('cwd', gettempdir())
 
         self.index_file = os.path.join(self.cwd, '.magicindex.json')
         self._tmp_index_file = os.path.join(self.cwd, '.magicindex.json.tmp')

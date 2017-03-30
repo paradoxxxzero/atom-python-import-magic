@@ -1,3 +1,7 @@
+## 1.0.0 - ES6
+* ES6 rewrite
+* Use the project of the current file
+
 ## 0.4.0 - Verbose
 * Prevent inserting imports before top level comments
 
