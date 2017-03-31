@@ -1,7 +1,7 @@
 {
   "name": "python-import-magic",
   "main": "./lib/python-import-magic",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Import automatically python modules using importmagic",
   "keywords": [],
   "repository": "https://github.com/paradoxxxzero/atom-python-import-magic",
