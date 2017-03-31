@@ -82,7 +82,9 @@ class Commands(object):
         index.build_index(sys.path + [self.cwd])
         with open(self._tmp_index_file, 'w') as fd:
             index.serialize(fd)
-        os.rename(self._tmp_index_file, self.index_file)
+        # Prevent multiple access
+        if os.path.exists(self._tmp_index_file):
+            os.rename(self._tmp_index_file, self.index_file)
 
     def read(self):
         return json.loads(''.join(fileinput.input()))
