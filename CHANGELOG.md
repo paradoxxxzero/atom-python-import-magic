@@ -1,3 +1,6 @@
+## 1.0.1 - Oops
+* Fix wrong python file test
+
 ## 1.0.0 - ES6
 * ES6 rewrite
 * Use the project of the current file
