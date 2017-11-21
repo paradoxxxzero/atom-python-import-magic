@@ -1,3 +1,6 @@
+## 1.1.1 - Contained
+* Restrict commands to python editors
+
 ## 1.1.0 - Oops
 * Fix wrong python file test
 
