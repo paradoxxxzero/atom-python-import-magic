@@ -1,4 +1,4 @@
-## 1.0.1 - Oops
+## 1.1.0 - Oops
 * Fix wrong python file test
 
 ## 1.0.0 - ES6
