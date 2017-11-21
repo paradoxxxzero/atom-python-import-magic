@@ -4,7 +4,7 @@
   "version": "1.0.4",
   "description": "Import automatically python modules using importmagic",
   "keywords": [],
-  "repository": "https://github.com/paradoxxxzero/atom-python-import-magic",
+  "repository": "git@github.com:paradoxxxzero/atom-python-import-magic",
   "license": "MIT",
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
