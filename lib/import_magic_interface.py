@@ -27,12 +27,9 @@ except ImportError:
 
 
 try:
-    import importmagic3 as importmagic
+    import importmagic
 except ImportError:
-    try:
-        import importmagic
-    except ImportError:
-        importmagic = None
+    importmagic = None
 
 try:
     import isort
