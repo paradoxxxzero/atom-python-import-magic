@@ -25,15 +25,39 @@ except ImportError:
             total = func(total, element)
             yield total
 
+
 try:
-    import importmagic
+    import importmagic3 as importmagic
 except ImportError:
-    importmagic = None
+    try:
+        import importmagic
+    except ImportError:
+        importmagic = None
 
 try:
     import isort
 except ImportError:
     isort = None
+
+
+def relativize(module, root, path):
+    if not path.startswith(root):
+        return module
+    path = os.path.relpath(path, root)
+    path_parts = path.split(os.path.sep)
+    mod_parts = module.split('.')
+    common_parts = 0
+    for mod_part, path_part in zip(mod_parts, path_parts):
+        if mod_part == path_part:
+            common_parts += 1
+        else:
+            break
+    if not common_parts:
+        return module
+    path_parts = path_parts[common_parts:]
+    mod_parts = mod_parts[common_parts:]
+    module = '.' * len(path_parts) + '.'.join(mod_parts)
+    return module
 
 
 class Commands(object):
@@ -43,7 +67,8 @@ class Commands(object):
                 notification='error',
                 message='importmagic/isort not found',
                 detail='You must install isort and importmagic for %s' %
-                sys.executable)
+                sys.executable
+            )
             sys.exit(0)
 
         self.data = self.read()
@@ -53,12 +78,14 @@ class Commands(object):
         self.index_file = os.path.join(self.cwd, '.magicindex.json')
         self._tmp_index_file = os.path.join(self.cwd, '.magicindex.json.tmp')
         self.index = self.read_index() if os.path.exists(
-            self.index_file) else None
+            self.index_file
+        ) else None
 
     def run(self):
         fun = getattr(self, self.cmd, None)
-        if self.index is None and self.cmd in (
-                'file_import_magic', 'add_import', 'list_possible_imports'):
+        if self.index is None and self.cmd in ('file_import_magic',
+                                               'add_import',
+                                               'list_possible_imports'):
             if os.path.exists(self._tmp_index_file):
                 return
             self.create_index()
@@ -68,7 +95,8 @@ class Commands(object):
             self.write(
                 notification='error',
                 message=self.cmd,
-                detail='Unknown command %s' % self.cmd)
+                detail='Unknown command %s' % self.cmd
+            )
             return
 
         fun(**self.data)
@@ -98,24 +126,40 @@ class Commands(object):
         self.write(
             notification='success',
             message='Reindex',
-            detail='%s reindexed.' % self.index_file)
+            detail='%s reindexed.' % self.index_file
+        )
         sys.exit(0)
 
-    def file_import_magic(self, source):
+    def file_import_magic(self, source, path, relative=False):
         scope = importmagic.Scope.from_source(source)
         unresolved, unreferenced = (
-            scope.find_unresolved_and_unreferenced_symbols())
-        source = ''.join(importmagic.update_imports(
-            source, self.index, unresolved, unreferenced))
+            scope.find_unresolved_and_unreferenced_symbols()
+        )
+        imports = importmagic.Imports(self.index, source)
+        imports.remove(unreferenced)
+        for symbol in unresolved:
+            scores = self.index.symbol_scores(symbol)
+            if not scores:
+                continue
+            _, module, variable = scores[0]
+            if relative:
+                module = relativize(module, self.cwd, path)
+            if variable is None:
+                imports.add_import(module)
+            else:
+                imports.add_import_from(module, variable)
+
+        source = ''.join(imports.update_source())
         source = isort.SortImports(file_contents=source).output
         self.write(file=source)
 
     def add_import(self, source, new_import):
         source = isort.SortImports(
-            file_contents=source, add_imports=(new_import,)).output
+            file_contents=source, add_imports=(new_import, )
+        ).output
         self.write(file=source)
 
-    def list_possible_imports(self, prefix, source):
+    def list_possible_imports(self, prefix, source, path, relative=False):
         try:
             scope = importmagic.Scope.from_source(source)
         except SyntaxError:
@@ -123,23 +167,24 @@ class Commands(object):
 
         if scope:
             unresolved, unreferenced = (
-                scope.find_unresolved_and_unreferenced_symbols())
+                scope.find_unresolved_and_unreferenced_symbols()
+            )
 
-            if prefix not in set(chain(*[
-                    accumulate(part.split('.'), lambda *t: '.'.join(t))
-                    for part in unresolved])):
+            if prefix not in set(
+                    chain(*[accumulate(part.split('.'), lambda *t: '.'.join(t))
+                            for part in unresolved])):
                 self.write(imports=[])
                 return
 
         scores = self.index.symbol_scores(prefix)
         imports = []
         for _, module, variable in scores:
+            if relative:
+                module = relativize(module, self.cwd, path)
             if variable is None:
                 imports.append('import %s' % module)
             else:
-                imports.append(
-                    'from %s import %s' % (
-                        module, variable))
+                imports.append('from %s import %s' % (module, variable))
         self.write(imports=imports)
 
     def init(self):
