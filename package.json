@@ -1,20 +1,20 @@
 {
   "name": "python-import-magic",
   "main": "./lib/python-import-magic",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "Import automatically python modules using importmagic",
   "keywords": [],
   "repository": "git@github.com:paradoxxxzero/atom-python-import-magic",
   "license": "MIT",
   "engines": {
-    "atom": ">=1.0.0 <2.0.0"
+    "atom": "*"
   },
-  "providedServices": {
-    "autocomplete.provider": {
-      "versions": {
-        "2.0.0": "provide"
-      }
-    }
+  "dependencies": {
+    "atom-select-list": "^0.7.0"
   },
-  "dependencies": {}
+  "devDependencies": {
+    "eslint": "^4.14.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-react": "^7.5.1"
+  }
 }

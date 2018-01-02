@@ -1,12 +1,11 @@
 """
-    import_magic python interfa
+    import_magic python interface
 """
 
 import fileinput
 import json
 import os
 import sys
-from itertools import chain
 from tempfile import gettempdir
 
 try:
@@ -38,7 +37,7 @@ except ImportError:
 
 
 def relativize(module, root, path):
-    if not path.startswith(root):
+    if not path or not path.startswith(root):
         return module
     path = os.path.relpath(path, root)
     path_parts = path.split(os.path.sep)
@@ -127,28 +126,16 @@ class Commands(object):
         )
         sys.exit(0)
 
-    def file_import_magic(self, source, path, relative=False):
+    def clean_imports(self, source):
         scope = importmagic.Scope.from_source(source)
         unresolved, unreferenced = (
             scope.find_unresolved_and_unreferenced_symbols()
         )
         imports = importmagic.Imports(self.index, source)
         imports.remove(unreferenced)
-        for symbol in unresolved:
-            scores = self.index.symbol_scores(symbol)
-            if not scores:
-                continue
-            _, module, variable = scores[0]
-            if relative:
-                module = relativize(module, self.cwd, path)
-            if variable is None:
-                imports.add_import(module)
-            else:
-                imports.add_import_from(module, variable)
-
         source = ''.join(imports.update_source())
         source = isort.SortImports(file_contents=source).output
-        self.write(file=source)
+        self.write(file=source, unresolved=list(unresolved))
 
     def add_import(self, source, new_import):
         source = isort.SortImports(
@@ -156,23 +143,7 @@ class Commands(object):
         ).output
         self.write(file=source)
 
-    def list_possible_imports(self, prefix, source, path, relative=False):
-        try:
-            scope = importmagic.Scope.from_source(source)
-        except SyntaxError:
-            scope = None
-
-        if scope:
-            unresolved, unreferenced = (
-                scope.find_unresolved_and_unreferenced_symbols()
-            )
-
-            if prefix not in set(
-                    chain(*[accumulate(part.split('.'), lambda *t: '.'.join(t))
-                            for part in unresolved])):
-                self.write(imports=[])
-                return
-
+    def list_possible_imports(self, prefix, source, path=None, relative=False):
         scores = self.index.symbol_scores(prefix)
         imports = []
         for _, module, variable in scores:

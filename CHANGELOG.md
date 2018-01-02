@@ -1,3 +1,11 @@
+## 2.0.0 - Chooser
+
+* Use a select-list panel to select the right import
+* Use it on word import and on file imports update
+* Removed import from completion
+* Rewrote using async/await
+* Added a remove unused imports method
+
 ## 1.2.0 - Relative
 
 * Support relative imports (by default).
