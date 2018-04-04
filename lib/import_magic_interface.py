@@ -6,6 +6,7 @@ import fileinput
 import json
 import os
 import sys
+import argparse
 from tempfile import gettempdir
 
 try:
@@ -35,6 +36,8 @@ try:
 except ImportError:
     isort = None
 
+parser = argparse.ArgumentParser(add_help=False)
+parser.add_argument('--settings-path', dest='settings_path')
 
 def relativize(module, root, path):
     if not path or not path.startswith(root):
@@ -57,7 +60,7 @@ def relativize(module, root, path):
 
 
 class Commands(object):
-    def __init__(self):
+    def __init__(self, settings_path=None):
         if isort is None or importmagic is None:
             self.write(
                 notification='error',
@@ -67,6 +70,7 @@ class Commands(object):
             )
             sys.exit(0)
 
+        self.settings_path = settings_path
         self.data = self.read()
         self.cmd = self.data.pop('cmd', None)
         self.cwd = self.data.pop('cwd', gettempdir())
@@ -76,6 +80,7 @@ class Commands(object):
         self.index = self.read_index() if os.path.exists(
             self.index_file
         ) else None
+
 
     def run(self):
         fun = getattr(self, self.cmd, None)
@@ -111,7 +116,7 @@ class Commands(object):
             os.rename(self._tmp_index_file, self.index_file)
 
     def read(self):
-        return json.loads(''.join(fileinput.input()))
+        return json.loads(''.join(fileinput.input([])))
 
     def write(self, **dct):
         sys.stdout.write(json.dumps(dct))
@@ -134,12 +139,12 @@ class Commands(object):
         imports = importmagic.Imports(self.index, source)
         imports.remove(unreferenced)
         source = ''.join(imports.update_source())
-        source = isort.SortImports(file_contents=source).output
+        source = isort.SortImports(file_contents=source, settings_path=self.settings_path).output
         self.write(file=source, unresolved=list(unresolved))
 
     def add_import(self, source, new_import):
         source = isort.SortImports(
-            file_contents=source, add_imports=(new_import, )
+            file_contents=source, add_imports=(new_import, ), settings_path=self.settings_path
         ).output
         self.write(file=source)
 
@@ -164,4 +169,5 @@ class Commands(object):
 
 
 if __name__ == '__main__':
-    Commands().run()
+    args = parser.parse_args()
+    Commands(settings_path=args.settings_path).run()
