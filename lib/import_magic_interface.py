@@ -134,13 +134,14 @@ class Commands(object):
         imports = importmagic.Imports(self.index, source)
         imports.remove(unreferenced)
         source = ''.join(imports.update_source())
-        source = isort.SortImports(file_contents=source).output
+
+        source = isort.code(source)
         self.write(file=source, unresolved=list(unresolved))
 
     def add_import(self, source, new_import):
-        source = isort.SortImports(
-            file_contents=source, add_imports=(new_import, )
-        ).output
+        source = isort.code(
+            source, config=isort.settings.Config(add_imports=(new_import, ))
+        )
         self.write(file=source)
 
     def list_possible_imports(self, prefix, source, path=None, relative=False):
